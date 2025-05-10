@@ -1,0 +1,150 @@
+-- Create the ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "TeleportGui"
+screenGui.Parent = game.Players.LocalPlayer.PlayerGui
+
+-- Create the Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 200, 0, 100) -- Size: 200x100 pixels
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Center of the screen
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5) -- Center alignment
+mainFrame.BackgroundColor3 = Color3.new(0, 0, 0) -- black
+mainFrame.BorderSizePixel = 2
+mainFrame.BorderColor3 = Color3.new(0.5, 0.5, 0.5) -- Medium gray
+mainFrame.Name = "TeleportFrame"
+mainFrame.Draggable = true -- Make the frame draggable
+mainFrame.Parent = screenGui
+mainFrame.Visible = false
+
+-- Create the Title Label
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0.3, 0) -- занимает верхнюю часть фрейма
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.Text = "Teleport to Player"
+titleLabel.TextColor3 = Color3.new(1, 1, 1) -- white text
+titleLabel.BackgroundColor3 = Color3.new(0, 0, 0) -- black background
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Draggable = true -- Make the title label draggable
+titleLabel.Parent = mainFrame
+
+-- Create the Input TextBox
+local inputTextBox = Instance.new("TextBox")
+inputTextBox.Size = UDim2.new(1, 0, 0.3, 0) -- занимает центральную часть фрейма
+inputTextBox.Position = UDim2.new(0, 0, 0.3, 0)
+inputTextBox.PlaceholderText = "Enter username..."
+inputTextBox.ClearTextOnFocus = false
+inputTextBox.Name = "PlayerNameInput"
+inputTextBox.Parent = mainFrame
+
+-- Create the Teleport Button
+local teleportButton = Instance.new("TextButton")
+teleportButton.Size = UDim2.new(1, 0, 0.3, 0) -- занимает нижнюю часть фрейма
+teleportButton.Position = UDim2.new(0, 0, 0.6, 0)
+teleportButton.Text = "Teleport"
+teleportButton.TextColor3 = Color3.new(1, 1, 1) -- White text
+teleportButton.BackgroundColor3 = Color3.new(0, 0.5, 0) -- Green background
+teleportButton.Font = Enum.Font.SourceSansBold
+teleportButton.TextSize = 16 -- Increased TextSize
+teleportButton.Name = "TeleportButton"
+teleportButton.Parent = mainFrame
+
+-- Function to handle teleportation
+local function handleTeleport()
+    local targetPlayerName = inputTextBox.Text
+    local targetPlayer = game.Players:FindFirstChild(targetPlayerName)
+
+    if targetPlayer then
+        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local localPlayer = game.Players.LocalPlayer
+            local localCharacter = localPlayer.Character
+            if localCharacter and localCharacter:FindFirstChild("HumanoidRootPart") then
+                local teleportPosition = targetPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 5, 0) -- Teleport 5 studs above
+                local success, errorMessage = pcall(function()
+                    local localRootPart = localCharacter:FindFirstChild("HumanoidRootPart")
+                    if localRootPart then
+                         localRootPart.CFrame = CFrame.new(teleportPosition)
+                    else
+                        error("Local player's HumanoidRootPart not found.")
+                    end
+                end)
+                if success then
+                    print("Teleported to " .. targetPlayerName)
+                else
+                    warn("Failed to teleport: " .. errorMessage)
+                    -- Show message to the player
+                    game.StarterGui:SetCore(
+                        "SendNotification",
+                        {
+                            Title = "Teleport Failed",
+                            Text = "Could not teleport to " .. targetPlayerName .. ". Please check the username and try again. Error: " .. errorMessage,
+                            Duration = 5,
+                        }
+                    )
+                end
+            else
+                warn("Local player's HumanoidRootPart not found.")
+                game.StarterGui:SetCore(
+                    "SendNotification",
+                    {
+                        Title = "Error",
+                        Text = "Local player's character not found.",
+                        Duration = 5,
+                    }
+                )
+            end
+        else
+            warn("Target player's HumanoidRootPart not found.")
+            game.StarterGui:SetCore(
+                "SendNotification",
+                {
+                    Title = "Error",
+                    Text = targetPlayerName .. "'s character is not fully loaded.",
+                    Duration = 5,
+                }
+            )
+        end
+    else
+        warn("Player not found: " .. targetPlayerName)
+        game.StarterGui:SetCore(
+            "SendNotification",
+            {
+                Title = "Player Not Found",
+                Text = "Player with username '" .. targetPlayerName .. "' not found.",
+                Duration = 5,
+            }
+        )
+    end
+    inputTextBox.Text = ""
+end
+
+-- Connect the button click event
+teleportButton.MouseButton1Click:Connect(handleTeleport)
+
+
+-- Create the Open/Close Button
+local openCloseButton = Instance.new("TextButton")
+openCloseButton.Size = UDim2.new(0, 50, 0, 20) -- Small button
+openCloseButton.Position = UDim2.new(0, 5, 0, 5) -- Top Left
+openCloseButton.Text = "Open"
+openCloseButton.TextColor3 = Color3.new(1, 1, 1)
+openCloseButton.BackgroundColor3 = Color3.new(0, 0.5, 0)
+openCloseButton.Font = Enum.Font.SourceSansBold
+openCloseButton.Name = "OpenCloseButton"
+openCloseButton.Parent = screenGui
+
+-- Function to toggle the visibility of the GUI
+local function toggleGuiVisibility()
+    if mainFrame.Visible then
+        mainFrame.Visible = false
+        openCloseButton.Text = "Open"
+        openCloseButton.BackgroundColor3 = Color3.new(0, 0.5, 0)
+    else
+        mainFrame.Visible = true
+        openCloseButton.Text = "Close"
+        openCloseButton.BackgroundColor3 = Color3.new(0.8, 0, 0)
+    end
+end
+
+-- Connect the button click event
+openCloseButton.MouseButton1Click:Connect(toggleGuiVisibility)
