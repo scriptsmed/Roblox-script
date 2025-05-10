@@ -1,0 +1,110 @@
+-- Function to highlight a player
+local function highlightPlayer(player, color)
+    -- Check if the player has a Character
+    local character = player.Character
+    if character then
+        -- Define the highlight params, name is important
+        local params = {
+            Name = "PlayerHighlight",
+            FillColor = color,
+            OutlineColor = Color3.new(0, 0, 0),  -- Black outline
+            OutlineTransparency = 0,
+            FillTransparency = 0.7
+        }
+        -- Check if a highlight already exists and destroy it
+        local existingHighlight = character:FindFirstChild("PlayerHighlight")
+        if existingHighlight then
+            existingHighlight:Destroy()
+        end
+        -- Create a new highlight
+        local highlight = Instance.new("Highlight")
+        highlight.Name = params.Name
+        highlight.FillColor = params.FillColor
+        highlight.OutlineColor = params.OutlineColor
+        highlight.OutlineTransparency = params.OutlineTransparency
+        highlight.FillTransparency = params.FillTransparency
+        highlight.Parent = character
+    end
+end
+
+-- Function to remove highlight from player
+local function removeHighlight(player)
+    local character = player.Character
+    if character then
+        local existingHighlight = character:FindFirstChild("PlayerHighlight")
+        if existingHighlight then
+            existingHighlight:Destroy()
+        end
+    end
+end
+
+-- Get the local player
+local localPlayer = game.Players.LocalPlayer
+--[[
+-- Define the team check (assuming players are on teams)
+local function isTeammate(player)
+    if localPlayer.Team and player.Team then -- Check if both players are on a team.
+        return player.Team == localPlayer.Team
+    else
+        return false -- if one of them is not on a team, consider them not teammates.
+    end
+end
+]]
+-- Main function to highlight other players
+local function highlightOtherPlayers()
+    -- Get all players in the game
+    local players = game.Players:GetPlayers()
+
+    -- Iterate through each player
+    for _, player in ipairs(players) do
+        -- Check if the player is not the local player and not a teammate
+       -- if player ~= localPlayer and not isTeammate(player) then
+        if player ~= localPlayer  then
+            -- Highlight the player in red
+            highlightPlayer(player, Color3.new(1, 0, 0)) -- Red color
+        elseif player == localPlayer then
+            removeHighlight(player) -- Remove highlight from the local player
+        --else
+           -- removeHighlight(player) -- Remove highlight from teammates
+        end
+    end
+    -- Send message to the client
+    if not _G.sentNotification then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Credits"; -- title
+            Text = "Made by AI!"; --description
+            Duration = "7"; -- how long its on screen
+        })
+        _G.sentNotification = true
+    end
+end
+
+-- Call the function when a player joins the game
+game.Players.PlayerAdded:Connect(function(player)
+    -- Wait for the player's character to load.  Important for highlights.
+    player.CharacterAdded:Connect(function()
+        wait(0.1) -- short wait
+        highlightOtherPlayers()
+    end)
+    -- ছোট্ট ডিলে যোগ করা হলো
+    wait(0.1)
+    highlightOtherPlayers()
+end)
+
+-- Call the function when a player leaves the game, and when teams may change
+game.Players.PlayerRemoving:Connect(highlightOtherPlayers)
+--local function onTeamChanged(player, newTeam)
+--    highlightOtherPlayers()
+--end
+
+-- Listen for team changes.  This is necessary to handle players changing teams.
+--[[for _, player in ipairs(game.Players:GetPlayers()) do
+    if player:IsA("Player") then
+        player:GetPropertyChangedSignal("Team"):Connect(function()
+           -- onTeamChanged(player, player.Team)
+        end)
+    end
+end
+]]
+-- Initial call in case the script loads after some players have already joined
+highlightOtherPlayers()
